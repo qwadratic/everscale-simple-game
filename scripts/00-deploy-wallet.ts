@@ -13,7 +13,7 @@ const program = new Command();
 const prompts = require("prompts");
 const fs = require("fs");
 async function main() {
-  const promptsData = [];
+  const promptsData: object[] = [];
   program
     .allowUnknownOption()
     .option("-kn, --key_number <key_number>", "Public key number")
@@ -52,16 +52,15 @@ async function main() {
   const signer = (await locklift.keystore.getSigner(keyNumber.toString()))!;
   let accountsFactory = locklift.factory.getAccountsFactory("Account");
 
-  const { contract: MyAccount, tx } = await accountsFactory.deployNewAccount({
+  const { account: MyAccount, tx } = await accountsFactory.deployNewAccount({
     publicKey: signer.publicKey,
     initParams: {
-      _randomNonce: 0, //locklift.utils.getRandomNonce(),
+      _randomNonce: locklift.utils.getRandomNonce(),
     },
     constructorParams: {},
     value: locklift.utils.toNano(balance),
   });
-  console.log(tx.transaction.outMessages[0].src);
-  console.log(`Wallet deployed at: ${MyAccount}`);
+  console.log(`Wallet deployed at: ${MyAccount.address}`);
 }
 
 main()

@@ -4,9 +4,9 @@ const {
   isValidEverAddress,
   isNumeric,
   Migration,
+  zeroAddress,
 } = require("./utils");
-const zeroAddress =
-  "0:0000000000000000000000000000000000000000000000000000000000000000";
+
 const BigNumber = require("bignumber.js");
 BigNumber.config({ EXPONENTIAL_AT: 257 });
 const logger = require("mocha-logger");
@@ -183,7 +183,6 @@ async function main() {
     initialSupply = options.initial_supply || "0";
   }
 
-  const TokenRoot = await locklift.factory.getContractArtifacts("TokenRoot");
   const TokenWallet = await locklift.factory.getContractArtifacts(
     "TokenWallet",
   );
@@ -211,8 +210,6 @@ async function main() {
     },
     value: locklift.utils.toNano(5),
   });
-  console.log(tokenRoot);
-  console.log(tx);
 
   console.log(`${name}: ${tokenRoot.address}`);
 }

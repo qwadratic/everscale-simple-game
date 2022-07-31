@@ -1,3 +1,5 @@
+import { ContractWithName } from "locklift/build/types";
+
 const { Command } = require("commander");
 const {
   logContract,
@@ -11,7 +13,7 @@ const program = new Command();
 const prompts = require("prompts");
 const fs = require("fs");
 async function main() {
-  const promptsData = [];
+  const promptsData: object[] = [];
   program
     .allowUnknownOption()
     .option("-kn, --key_number <key_number>", "Public key number")
@@ -21,8 +23,7 @@ async function main() {
     )
     .option("-r, --reward <reward>", "Amount of reward for 1 game")
     .option("-mp, --max_players <max_players>", "Number of players for 1 game")
-    //.option("-tr, --token_root <token_root>", "TIP3 Token root")
-    .option("-cn, --contract_name <contract_name>", "Wallet contract name");
+    .option("-tr, --token_root <token_root>", "TIP3 Token root");
 
   program.parse(process.argv);
 
@@ -83,31 +84,13 @@ async function main() {
   const contractPath =
     options.contract_path || response.contractPath || "build";
 
-  let contractName;
-  if (!options.contract_name) {
-    contractName = (
-      await prompts({
-        type: "select",
-        name: "contractName",
-        message: "Select Gitcoin Warmup contract name",
-        choices: [
-          ...new Set(fs.readdirSync(contractPath).map(o => o.split(".")[0])),
-        ]
-          .filter((value, index, self) => self.indexOf(value) === index)
-          .map(e => new Object({ title: e, value: e })),
-      })
-    ).contractName;
-  } else {
-    contractName = options.contract_name;
-  }
-
-  const signer = (await locklift.keystore.getSigner("0"))!;
+  const signer = (await locklift.keystore.getSigner(keyNumber.toString()))!;
 
   const { contract: sample, tx } = await locklift.factory.deployContract({
-    contract: contractName,
+    contract: "GitcoinWarmup",
     publicKey: signer.publicKey,
     initParams: {
-      _nonce: 0, //locklift.utils.getRandomNonce(),
+      _nonce: locklift.utils.getRandomNonce(),
     },
     constructorParams: {
       _deployWalletValue: locklift.utils.toNano(balance),
@@ -118,14 +101,13 @@ async function main() {
     value: locklift.utils.toNano(balance + 5),
   });
   const gitcoin = locklift.factory.getDeployedContract(
-    "GitcoinWarmup", //name infered from your contracts
-    `${sample.address.toString()}`,
+    "GitcoinWarmup",
+    sample.address,
   );
 
   const tokenWallet = await gitcoin.methods.tokenWallet({}).call();
-  const balanceWallet = await gitcoin.methods.balance({}).call();
-  console.log(tokenWallet);
-  console.log(balanceWallet);
+
+  console.log(`TIP3 Wallet deployed at: ${tokenWallet.tokenWallet}`);
   console.log(`Gitcoin deployed at: ${sample.address.toString()}`);
 }
 

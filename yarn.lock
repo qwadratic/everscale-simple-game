@@ -695,6 +695,33 @@ locklift@^2.1.6:
     typescript "^4.7.4"
     underscore "^1.13.1"
 
+locklift@^2.1.7:
+  version "2.1.7"
+  resolved "https://registry.yarnpkg.com/locklift/-/locklift-2.1.7.tgz#76e7f91ba4cade5d144ec94cf8d8f6a5c93dc091"
+  integrity sha512-Wr+ivwp1AAPvj9Knhi5zy5vlGDV5FkiU8YPcPoRsYasf7VQ8zEJ72YvtTc2JC7BDKBgumuDYdEeAndi2mW0I9g==
+  dependencies:
+    axios "^0.27.2"
+    bignumber.js "^9.0.1"
+    chalk "^4.1.2"
+    commander "^7.2.0"
+    directory-tree "^3.2.2"
+    ejs "^3.1.6"
+    env-paths "^2.2.1"
+    everscale-crypto "^0.1.1"
+    everscale-inpage-provider "^0.3.28"
+    everscale-standalone-client "^2.0.19"
+    fs-extra "^10.1.0"
+    lodash "^4.17.21"
+    mocha "^10.0.0"
+    node-gzip "^1.1.2"
+    rxjs "^7.5.6"
+    superstruct "^0.16.0"
+    tablemark "^2.0.0"
+    ts-mocha "^10.0.0"
+    tsconfig-paths "^4.0.0"
+    typescript "^4.7.4"
+    underscore "^1.13.1"
+
 lodash.camelcase@^4.3.0:
   version "4.3.0"
   resolved "https://registry.npmjs.org/lodash.camelcase/-/lodash.camelcase-4.3.0.tgz"

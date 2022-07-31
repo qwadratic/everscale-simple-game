@@ -6,7 +6,8 @@ const chai = require("chai");
 chai.use(require("chai-bignumber")());
 
 const EMPTY_TVM_CELL = "te6ccgEBAQEAAgAAAA==";
-
+const zeroAddress =
+  "0:0000000000000000000000000000000000000000000000000000000000000000";
 const getRandomNonce = () => (Math.random() * 64000) | 0;
 
 const stringToBytesArray = dataString => {
@@ -145,4 +146,5 @@ module.exports = {
   isValidEverAddress,
   isNumeric,
   EMPTY_TVM_CELL,
+  zeroAddress,
 };
