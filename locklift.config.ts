@@ -11,10 +11,10 @@ const LOCAL_NETWORK_ENDPOINT = "http://localhost/";
 const config: LockliftConfig = {
   compiler: {
     // Specify path to your TON-Solidity-Compiler
-    path: "/Users/cyace84/Desktop/Projects/TON-Solidity-Compiler/build/solc/solc",
+    // path: "~/bin/solc",
 
     // Or specify version of compiler
-    //version: "0.61.2",
+    version: "0.61.2",
 
     // Specify config for extarnal contracts as in exapmple
     // externalContracts: {
@@ -23,8 +23,8 @@ const config: LockliftConfig = {
   },
   linker: {
     // Specify path to your stdlib
-    path: "/Users/cyace84/Desktop/Projects/TVM-linker/target/release/tvm_linker",
-    lib: "/Users/cyace84/Desktop/Projects/TON-Solidity-Compiler/lib/stdlib_sol.tvm",
+    path: "~/.everdev/solidity/tvm_linker",
+    lib: "~/.everdev/solidity/stdlib_sol.tvm",
 
     // Or specify version of linker
     //version: "0.15.48",

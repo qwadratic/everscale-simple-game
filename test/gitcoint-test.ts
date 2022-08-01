@@ -14,6 +14,10 @@ import {
 
 let gitcoinContract: Contract<FactorySource["GitcoinWarmup"]>;
 let signer: Signer;
+
+const program = new Command();
+const migration = new Migration();
+
 let wallets = {};
 
 function sleep(ms) {
@@ -39,15 +43,15 @@ describe("Test GitcoinWarmup contract", async function () {
 
       expect(gitcoinData.code).not.to.equal(
         undefined,
-        "Code should be available",
+        "Code should be available"
       );
       expect(gitcoinData.abi).not.to.equal(
         undefined,
-        "ABI should be available",
+        "ABI should be available"
       );
       expect(gitcoinData.tvc).not.to.equal(
         undefined,
-        "tvc should be available",
+        "tvc should be available"
       );
     });
 
@@ -138,54 +142,92 @@ describe("Test GitcoinWarmup contract", async function () {
       expect(
         await locklift.provider
           .getBalance(gitcoinContract.address)
-          .then(balance => Number(balance)),
+          .then((balance) => Number(balance))
       ).to.be.above(0);
     });
   });
   describe("Interact with contract", async function () {
     it("Game flow", async function () {
-      const BIDS = [24, 31, 42, 92, 42, 65, 42, 7, 2, 12];
+      console.log("game address", gitcoinContract.address.toString());
+      const RUNS = 10;
+      const batchSize = 5;
+      const testbids = [1, 3, 5, 7, 9];
+      const getNPlayers = async () =>
+        Number.parseInt(
+          (await gitcoinContract.methods.nowPlayers({}).call()).nowPlayers
+        );
 
-      const accountGit = locklift.factory.getDeployedContract(
-        "GitcoinWarmup",
-        gitcoinContract.address,
-      );
+      const wallets = (await Promise.all(deploys)).map((o) => o.account);
 
-      for (let i = 0; i < MAX_PLAYERS; i++) {
-        const myWallet = wallets[i];
-        await myWallet.runTarget(
+      let bids;
+      for (let n = 0; n < RUNS; n++) {
+        console.log("RUN", n + 1);
+        const runs = [];
+        nplayers = await getNPlayers();
+        console.log("nowPlayers", nplayers);
+        for (let i = 0; i < batchSize - 1; i++) {
+          runs.push(
+            wallets[i].runTarget(
+              {
+                contract: gitcoinContract,
+                value: locklift.utils.toNano(5),
+              },
+              (gtc) => gtc.methods.placeBid({ _number: testbids[i] })
+            )
+          );
+        }
+        await Promise.all(runs);
+        bids = await gitcoinContract.methods.bids({}).call();
+        console.log(
+          "bids",
+          bids.bids.map(([a, b]) => [a.toString(), Number.parseInt(b)])
+        );
+        console.log("w last", wallets[batchSize - 1].address.toString());
+        try {
+        await wallets[batchSize - 1].runTarget(
           {
-            contract: accountGit,
-            value: locklift.utils.toNano(1),
+            contract: gitcoinContract,
+            value: locklift.utils.toNano(5),
           },
-          gtc => {
-            return gtc.methods.placeBid({
-              _number: BIDS[i],
-            });
-          },
+          (gtc) => gtc.methods.placeBid({ _number: testbids[batchSize - 1] })
         );
-
-        const bids = (await gitcoinContract.methods.bids({}).call()).bids;
-        const bidsMap = new Map(
-          bids.map(object => {
-            return [object[0].toString(), object[1]];
-          }),
+        bids = await gitcoinContract.methods.bids({}).call();
+        console.log(
+          "bids",
+          bids.bids.map(([a, b]) => [a.toString(), Number.parseInt(b)])
         );
-        console.log(bidsMap);
-        const players = (await gitcoinContract.methods.players({}).call())
-          .players;
-
-        expect(bidsMap.get(myWallet.address.toString())).to.be.equal(
-          BIDS[i].toString(),
-          "Wrong bid",
-        );
-        expect(players[i].toString()).to.be.equal(myWallet.address.toString());
+        }
+        catch (e) {
+          console.error(e);
+        }
       }
 
-      const pastEvents = await gitcoinContract.getPastEvents({
-        filter: event => event.event === "gameResult",
+      const { events } = await gitcoinContract.getPastEvents({});
+      events.map((e) => {
+        console.log(e.data._winningNumber, e.data._winningDelta);
+        console.log(e.data._winners.map((a) => a.toString()));
       });
-      console.log(pastEvents);
+
+      const tws = [];
+      for (let w of wallets) {
+        tws.push(
+          tokenRoot.methods
+            .walletOf({ answerId: 0, walletOwner: w.address })
+            .call({ responsible: true })
+        );
+      }
+      const twaddrs = (await Promise.all(tws)).map((o) => o.value0);
+      for (let tw of twaddrs) {
+        const b = Number.parseInt(await locklift.provider.getBalance(tw));
+        if (b > 0) {
+          const c = locklift.factory.getDeployedContract("TokenWallet", tw);
+          const bal = (
+            await c.methods.balance({ answerId: 0 }).call({ responsible: true })
+          ).value0;
+          console.log("TW", tw.toString(), "balance", bal);
+        }
+      }
+
     });
   });
 });

@@ -4,8 +4,13 @@
   "description": "",
   "scripts": {
     "test": "npx locklift test --network local",
+    "new-wallet": "yarn locklift run -n local -s scripts/00-deploy-wallet.ts --key_number 0 --balance 100",
+    "new-token": "yarn locklift run -n local -s scripts/01-deploy-token.ts -ro 0:0000000000000000000000000000000000000000000000000000000000000000 --name escalator --symbol ESC --decimals 0 --initial_supply 10000 --disable_mint false --disable_burn_by_root true --pause_burn false",
+    "new-game": "yarn locklift run -n local -s scripts/02-deploy-game.ts --balance 50 --contract_name GitcoinWarmup",
+    "topup-game": "yarn locklift run -n local -s scripts/03-topup-game.ts",
     "start-sandbox": "docker run -d -e USER_AGREEMENT=yes --rm --name local-node -p80:80 tonlabs/local-node:0.29.1",
-    "stop-sandbox": "docker kill local-node"
+    "stop-sandbox": "docker kill local-node",
+    "reload-sandbox": "yarn stop-sandbox && yarn start-sandbox"
   },
   "author": "",
   "license": "ISC",
