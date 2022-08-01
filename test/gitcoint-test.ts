@@ -11,7 +11,7 @@ import {
   zeroAddress,
   EMPTY_TVM_CELL,
 } from "./../scripts/utils";
-import { Account, AccountFactory } from "locklift/factory";
+import { Account } from "locklift/factory";
 import { TransactionWithOutput } from "locklift/build/types";
 
 let gitcoinContract: Contract<FactorySource["GitcoinWarmup"]>;
@@ -158,7 +158,7 @@ describe("Test GitcoinWarmup contract", async function () {
         );
 
       let accountsFactory = locklift.factory.getAccountsFactory("Account");
-      const deploys: Promise<{account: {runTarget, address}, tx: Object}>[] = [];
+      const deploys: Promise<{account: Object, tx: Object}>[] = [];
       let nplayers = await getNPlayers();
 
       for (let i = 0; i < 5; i++) {
@@ -174,7 +174,7 @@ describe("Test GitcoinWarmup contract", async function () {
           })
         );
       }
-      const wallets: {runTarget, address}[] = (await Promise.all(deploys)).map((o) => o.account);
+      const wallets: any[] = (await Promise.all(deploys)).map((o) => o.account);
 
       let bids;
       for (let n = 0; n < RUNS; n++) {
