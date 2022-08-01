@@ -19,6 +19,7 @@ contract GitcoinWarmup is RandomNonce, CheckPubKey, IAcceptTokensTransferCallbac
     uint8 constant maxBid = 10;
     uint128 constant reward = 1;
 
+
     address public static tokenRoot;
 
     address public tokenWallet;
@@ -97,8 +98,7 @@ contract GitcoinWarmup is RandomNonce, CheckPubKey, IAcceptTokensTransferCallbac
     function finishGame(address gasTo) external {
         require(msg.sender == address(this), 203, "I can only be finished by message from me");
         tvm.rawReserve(20 ever, 2);
-
-
+       
         (uint8 r, int16 winDelta, address[] winners) = _getWinners();
         balance -= reward * uint128(winners.length);
         for (address player: winners) {
