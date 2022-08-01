@@ -1,7 +1,7 @@
 import { Command } from "commander";
 import prompts from "prompts";
 import { expect } from "chai";
-import { Contract, Signer, Address } from "locklift";
+import { Contract, Signer, Address, ContractMethod, AbiFunctionInputs, AbiFunctionName, DecodedAbiFunctionOutputs } from "locklift";
 import { FactorySource } from "../build/factorySource";
 import {
   logContract,
@@ -11,6 +11,8 @@ import {
   zeroAddress,
   EMPTY_TVM_CELL,
 } from "./../scripts/utils";
+import { Account, AccountFactory } from "locklift/factory";
+import { TransactionWithOutput } from "locklift/build/types";
 
 let gitcoinContract: Contract<FactorySource["GitcoinWarmup"]>;
 let signer: Signer;
@@ -31,7 +33,6 @@ const NAME = "Gitcoin Warmup TIP3 Token";
 const SYMBOL = "GWT3";
 const REWARD = 1000 * 10 ** DECIMALS;
 const MAX_PLAYERS = 10;
-
 describe("Test GitcoinWarmup contract", async function () {
   before(async () => {
     signer = (await locklift.keystore.getSigner(keyNumber))!;
@@ -76,7 +77,7 @@ describe("Test GitcoinWarmup contract", async function () {
       const wallet = wallets[0];
       const tokenWalletData =
         locklift.factory.getContractArtifacts("TokenWallet");
-      const { contract: tokenRoot } = await locklift.factory.deployContract({
+      let { contract: tokenRoot } = await locklift.factory.deployContract({
         workchain: 0,
         contract: "TokenRoot",
         publicKey: signer.publicKey,
@@ -104,13 +105,11 @@ describe("Test GitcoinWarmup contract", async function () {
         contract: "GitcoinWarmup",
         publicKey: signer.publicKey,
         initParams: {
-          _nonce: locklift.utils.getRandomNonce(),
+          _randomNonce: locklift.utils.getRandomNonce(),
+          tokenRoot: tokenRoot.address
         },
         constructorParams: {
-          _deployWalletValue: locklift.utils.toNano(5),
-          _reward: REWARD,
-          _maxPlayers: MAX_PLAYERS,
-          _tokenRoot: tokenRoot.address,
+          
         },
         value: locklift.utils.toNano(10),
       });
@@ -147,9 +146,10 @@ describe("Test GitcoinWarmup contract", async function () {
     });
   });
   describe("Interact with contract", async function () {
+    const tokenRoot = migration.load('TokenRoot', 'token') as Contract<FactorySource["TokenRoot"]>;
     it("Game flow", async function () {
       console.log("game address", gitcoinContract.address.toString());
-      const RUNS = 10;
+      const RUNS = 30;
       const batchSize = 5;
       const testbids = [1, 3, 5, 7, 9];
       const getNPlayers = async () =>
@@ -157,12 +157,29 @@ describe("Test GitcoinWarmup contract", async function () {
           (await gitcoinContract.methods.nowPlayers({}).call()).nowPlayers
         );
 
-      const wallets = (await Promise.all(deploys)).map((o) => o.account);
+      let accountsFactory = locklift.factory.getAccountsFactory("Account");
+      const deploys: Promise<{account: {runTarget, address}, tx: Object}>[] = [];
+      let nplayers = await getNPlayers();
+
+      for (let i = 0; i < 5; i++) {
+        const signer = (await locklift.keystore.getSigner(i.toString()))!;
+        deploys.push(
+          accountsFactory.deployNewAccount({
+            publicKey: signer.publicKey,
+            initParams: {
+              _randomNonce: locklift.utils.getRandomNonce(),
+            },
+            constructorParams: {},
+            value: locklift.utils.toNano(30),
+          })
+        );
+      }
+      const wallets: {runTarget, address}[] = (await Promise.all(deploys)).map((o) => o.account);
 
       let bids;
       for (let n = 0; n < RUNS; n++) {
         console.log("RUN", n + 1);
-        const runs = [];
+        const runs: Promise<{transaction, output?}>[] = [];
         nplayers = await getNPlayers();
         console.log("nowPlayers", nplayers);
         for (let i = 0; i < batchSize - 1; i++) {
@@ -184,20 +201,19 @@ describe("Test GitcoinWarmup contract", async function () {
         );
         console.log("w last", wallets[batchSize - 1].address.toString());
         try {
-        await wallets[batchSize - 1].runTarget(
-          {
-            contract: gitcoinContract,
-            value: locklift.utils.toNano(5),
-          },
-          (gtc) => gtc.methods.placeBid({ _number: testbids[batchSize - 1] })
-        );
-        bids = await gitcoinContract.methods.bids({}).call();
-        console.log(
-          "bids",
-          bids.bids.map(([a, b]) => [a.toString(), Number.parseInt(b)])
-        );
-        }
-        catch (e) {
+          await wallets[batchSize - 1].runTarget(
+            {
+              contract: gitcoinContract,
+              value: locklift.utils.toNano(5),
+            },
+            (gtc) => gtc.methods.placeBid({ _number: testbids[batchSize - 1] })
+          );
+          bids = await gitcoinContract.methods.bids({}).call();
+          console.log(
+            "bids",
+            bids.bids.map(([a, b]) => [a.toString(), Number.parseInt(b)])
+          );
+        } catch (e) {
           console.error(e);
         }
       }
@@ -208,7 +224,7 @@ describe("Test GitcoinWarmup contract", async function () {
         console.log(e.data._winners.map((a) => a.toString()));
       });
 
-      const tws = [];
+      const tws: Promise<{value0: any}>[] = [];
       for (let w of wallets) {
         tws.push(
           tokenRoot.methods

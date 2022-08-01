@@ -15,7 +15,7 @@ const fs = require("fs");
 const migration = new Migration();
 
 async function main() {
-  const promptsData = [];
+  const promptsData: Object[] = [];
   program
     .allowUnknownOption()
     .option("-kn, --key_number <key_number>", "Public key number")
@@ -60,11 +60,12 @@ async function main() {
   } else {
     contractName = options.contract_name;
   }
+  let contractName1 = "GitcoinWarmup"
 
   const signer = (await locklift.keystore.getSigner("0"))!;
   const tokenRootCtr = migration.load("TokenRoot", "token");
   const { contract: gitcoin } = await locklift.factory.deployContract({
-    contract: contractName,
+    contract: contractName1,
     publicKey: signer.publicKey,
     initParams: {
       tokenRoot: tokenRootCtr.address,

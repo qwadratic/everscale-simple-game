@@ -1,4 +1,4 @@
-import { Address } from "locklift/.";
+import { Address, Signer } from "locklift/.";
 
 const { Command } = require("commander");
 const {

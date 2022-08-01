@@ -15,7 +15,7 @@ const fs = require("fs");
 const migration = new Migration();
 
 async function main() {
-  const promptsData: object[] = [];
+  const promptsData: Object[] = [];
   program
     .allowUnknownOption()
     .option("-kn, --key_number <key_number>", "Public key number")
@@ -54,7 +54,7 @@ async function main() {
   const signer = (await locklift.keystore.getSigner(keyNumber.toString()))!;
   let accountsFactory = locklift.factory.getAccountsFactory("Account");
 
-  const { account: MyAccount, tx } = await accountsFactory.deployNewAccount({
+  const { account: account, tx } = await accountsFactory.deployNewAccount({
     publicKey: signer.publicKey,
     initParams: {
       _randomNonce: locklift.utils.getRandomNonce(),

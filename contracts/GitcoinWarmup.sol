@@ -10,6 +10,18 @@ import "./tip3/interfaces/ITokenWallet.sol";
 import "./tip3/interfaces/IAcceptTokensTransferCallback.sol";
 import "./tip3/interfaces/IAcceptTokensMintCallback.sol";
 
+// реализовать калбеки
+// external owner
+// калбеки вынести в родительский контракт (сделать первым пунктом туториала)
+// гитхаб экшны
+// гайд:
+// - создание аккаунта, обьяснение между внешними и внутренними вызовами
+// - деплой токена и кошельков
+// - трансферы, минты
+// - контракт-владелец кошелька, калбеки
+// - работа с газом: rawResreve, accept, flags
+// - задача: сделать вариант со ставками (соотв. подготовить контракты чтоб было удобно это сделать)
+
 contract GitcoinWarmup is RandomNonce, CheckPubKey, IAcceptTokensTransferCallback, IAcceptTokensMintCallback {
     uint128 constant deployBalance = 1 ever;
     uint128 constant msgFee = 0.5 ever;
@@ -83,12 +95,13 @@ contract GitcoinWarmup is RandomNonce, CheckPubKey, IAcceptTokensTransferCallbac
         require(_number <= maxBid, 200, "Bid more than the maximum");
         require(balance >= reward * maxPlayers, 201, "Insufficient funds to reward on the gaming contract");
         require(!bids.exists(msg.sender), 202, "You are already in the game!");
+
         tvm.rawReserve(20 ever, 2);
         
         bids[msg.sender] = _number;
         nowPlayers += 1;
 
-        if (nowPlayers == maxPlayers) 
+        if (nowPlayers == maxPlayers)
             this.finishGame{value: 0, flag: 128}(msg.sender);
         else
             msg.sender.transfer({value: 0, flag: 128});
