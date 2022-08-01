@@ -26,6 +26,6 @@
     "skipLibCheck": true /* Skip type checking all .d.ts files. */
   },
   "exclude": ["node_modules", "sample-project", "sample-project-typescript"],
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "./**/*.ts"],
   "inlineSourceMap": true
 }

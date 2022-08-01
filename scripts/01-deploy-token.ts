@@ -1,3 +1,5 @@
+import { Address } from "locklift/.";
+
 const { Command } = require("commander");
 const {
   logContract,
@@ -17,8 +19,6 @@ const fs = require("fs");
 const migration = new Migration();
 
 async function main() {
-  const keyPairs = await locklift.keystore.getSigner("0");
-  console.log(keyPairs);
   const promptsData = [];
 
   program
@@ -29,13 +29,13 @@ async function main() {
     .option("-dec, --decimals <decimals>", "Decimals")
     .option(
       "-ist, --initial_supply_to <initial_supply_to>",
-      "Initial supply to (address)",
+      "Initial supply to (address)"
     )
     .option("-is, --initial_supply <initial_supply>", "Initial supply (amount)")
     .option("-dsbm, --disable_mint <disable_mint>", "Disable mint")
     .option(
       "-dsbrb, --disable_burn_by_root <disable_burn_by_root>",
-      "Disable burn by root owner",
+      "Disable burn by root owner"
     )
     .option("-pb, --pause_burn <pause_burn>", "Pause burn");
 
@@ -48,7 +48,7 @@ async function main() {
       type: "text",
       name: "rootOwner",
       message: "Root owner",
-      validate: value =>
+      validate: (value) =>
         isValidEverAddress(value) ? true : "Invalid TON address",
     });
   }
@@ -58,7 +58,7 @@ async function main() {
       type: "text",
       name: "name",
       message: "Name",
-      validate: value => !!value,
+      validate: (value) => !!value,
     });
   }
 
@@ -67,7 +67,7 @@ async function main() {
       type: "text",
       name: "symbol",
       message: "Symbol",
-      validate: value => !!value,
+      validate: (value) => !!value,
     });
   }
 
@@ -76,7 +76,7 @@ async function main() {
       type: "text",
       name: "decimals",
       message: "Decimals",
-      validate: value =>
+      validate: (value) =>
         isNumeric(value) && +value <= 18 ? true : "Invalid number",
     });
   }
@@ -129,27 +129,27 @@ async function main() {
     pauseBurn = options.pause_burn === "true";
   }
 
-  if (
-    options.initial_supply_to !== "" &&
-    !isValidEverAddress(options.initial_supply_to)
-  ) {
-    promptsData.push({
-      type: "text",
-      name: "initialSupplyTo",
-      message: "Initial supply to address (default: NO INITIAL SUPPLY)",
-      validate: value =>
-        value === "" || isValidEverAddress(value)
-          ? true
-          : "Invalid TON address",
-    });
-  }
+  // if (
+  //   options.initial_supply_to !== "" &&
+  //   !isValidEverAddress(options.initial_supply_to)
+  // ) {
+  //   promptsData.push({
+  //     type: "text",
+  //     name: "initialSupplyTo",
+  //     message: "Initial supply to address (default: NO INITIAL SUPPLY)",
+  //     validate: (value) =>
+  //       value === "" || isValidEverAddress(value)
+  //         ? true
+  //         : "Invalid TON address",
+  //   });
+  // }
 
   const response = await prompts(promptsData);
 
-  const initialSupplyTo =
+  let initialSupplyTo =
     options.initial_supply_to ||
     response.initialSupplyTo ||
-    locklift.utils.zeroAddress;
+    zeroAddress;
   const rootOwner = options.root_owner || response.rootOwner;
   const name = options.name || response.name;
   const symbol = options.symbol || response.symbol;
@@ -168,7 +168,7 @@ async function main() {
   let initialSupply;
   if (
     !options.initial_supply &&
-    initialSupplyTo !== locklift.utils.zeroAddress
+    initialSupplyTo !== zeroAddress
   ) {
     initialSupply =
       (
@@ -176,23 +176,25 @@ async function main() {
           type: "text",
           name: "initialSupply",
           message: "Initial supply (amount)",
-          validate: value => (isNumeric(value) ? true : "Invalid number"),
+          validate: (value) => (isNumeric(value) ? true : "Invalid number"),
         })
       ).initialSupply || "0";
   } else {
     initialSupply = options.initial_supply || "0";
   }
 
-  const TokenRoot = await locklift.factory.getContractArtifacts("TokenRoot");
+  initialSupplyTo = migration.load("Account", "wallet").address;
+
+  // const TokenRoot = await locklift.factory.getContractArtifacts("TokenRoot");
   const TokenWallet = await locklift.factory.getContractArtifacts(
-    "TokenWallet",
+    "TokenWallet"
   );
-  const { contract: tokenRoot, tx } = await locklift.factory.deployContract({
-    workchain: 0,
+  const signer = await locklift.keystore.getSigner("0");
+  const {contract: tokenRoot} = await locklift.factory.deployContract({
     contract: "TokenRoot",
-    publicKey: keyPairs.publicKey,
+    publicKey: signer.publicKey,
     initParams: {
-      deployer_: zeroAddress,
+      deployer_: new Address(zeroAddress),
       randomNonce_: (Math.random() * 6400) | 0,
       rootOwner_: rootOwner,
       name_: name,
@@ -203,23 +205,22 @@ async function main() {
     constructorParams: {
       initialSupplyTo: initialSupplyTo,
       initialSupply: new BigNumber(initialSupply).shiftedBy(decimals).toFixed(),
-      deployWalletValue: locklift.utils.toNano("0.1"),
+      deployWalletValue: locklift.utils.toNano(1),
       mintDisabled: disableMint,
       burnByRootDisabled: disableBurnByRoot,
       burnPaused: pauseBurn,
-      remainingGasTo: zeroAddress,
+      remainingGasTo: new Address(zeroAddress),
     },
     value: locklift.utils.toNano(5),
   });
-  console.log(tokenRoot);
-  console.log(tx);
 
   console.log(`${name}: ${tokenRoot.address}`);
+  migration.store(tokenRoot, "token");
 }
 
 main()
   .then(() => process.exit(0))
-  .catch(e => {
+  .catch((e) => {
     console.log(e);
     process.exit(1);
   });
