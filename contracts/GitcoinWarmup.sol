@@ -2,19 +2,18 @@ pragma ton-solidity >= 0.57.3;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
-import '@broxus/contracts/contracts/access/InternalOwner.sol';
 import '@broxus/contracts/contracts/utils/CheckPubKey.sol';
-
+import "./tip3/interfaces/IAcceptTokensTransferCallback.sol";
+import "./tip3/interfaces/IAcceptTokensMintCallback.sol";
 import "./interfaces/TIP3TokenRoot.sol";
 import "./interfaces/TIP3TokenWallet.sol";
-import "./interfaces/IAcceptTokensTransferCallback.sol";
 
-contract GitcoinWarmup is CheckPubKey {
+contract GitcoinWarmup is CheckPubKey, IAcceptTokensTransferCallback, IAcceptTokensMintCallback {
     uint128 private transferGas = 0.8 ever;
     uint128 public reward;
     uint128 public balance;
 
-    //uint16 static _nonce;
+    uint16 static _nonce;
     uint16 constant maxBid = 100;
     uint16 public maxPlayers;
 
@@ -36,7 +35,6 @@ contract GitcoinWarmup is CheckPubKey {
         address _tokenRoot
     ) public checkPubKey {
         tvm.accept();
-        //owner = msg.sender;
         reward = _reward;
         maxPlayers = _maxPlayers;
         tokenRoot = _tokenRoot;
@@ -101,14 +99,36 @@ contract GitcoinWarmup is CheckPubKey {
         if (players.length == maxPlayers) _finishGame();
     }
 
-    // function setMaxPlayers(uint16 _newMaxPlayers) public onlyOwner {
-    //     maxPlayers = _newMaxPlayers;
-    // }
+    function onAcceptTokensTransfer(
+        address _tokenRoot,
+        uint128 _amount,
+        address _sender,
+        address _senderWallet,
+        address _remainingGasTo,
+        TvmCell _payload
+    ) external override {
+        require(msg.sender == tokenWallet, 101, "Sender is not Token Wallet");
+        balance += _amount;
 
-    // function setReward(uint16 _newReward) public onlyOwner {
-    //     tvm.accept();
-    //     reward = _newReward;
-    // }
+        _payload;
+        _remainingGasTo;
+        _tokenRoot;
+        _senderWallet;
+        _sender;
+    }
+
+    function onAcceptTokensMint(
+        address _tokenRoot,
+        uint128 _amount,
+        address _remainingGasTo,
+        TvmCell _payload
+    ) external override {
+        require(msg.sender == tokenWallet, 101, "Sender is not Token Wallet");
+        balance += _amount;
+        _payload;
+        _remainingGasTo;
+        _tokenRoot;
+    }
 
     function _finishGame() private {
         address[] winners;
