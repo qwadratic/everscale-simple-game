@@ -19,7 +19,8 @@ const fs = require("fs");
 const migration = new Migration();
 
 async function main() {
-  const promptsData = [];
+  const keyPairs = await locklift.keystore.getSigner("0");
+  const promptsData: Object[] = [];
 
   program
     .allowUnknownOption()
@@ -29,13 +30,13 @@ async function main() {
     .option("-dec, --decimals <decimals>", "Decimals")
     .option(
       "-ist, --initial_supply_to <initial_supply_to>",
-      "Initial supply to (address)"
+      "Initial supply to (address)",
     )
     .option("-is, --initial_supply <initial_supply>", "Initial supply (amount)")
     .option("-dsbm, --disable_mint <disable_mint>", "Disable mint")
     .option(
       "-dsbrb, --disable_burn_by_root <disable_burn_by_root>",
-      "Disable burn by root owner"
+      "Disable burn by root owner",
     )
     .option("-pb, --pause_burn <pause_burn>", "Pause burn");
 
@@ -48,7 +49,7 @@ async function main() {
       type: "text",
       name: "rootOwner",
       message: "Root owner",
-      validate: (value) =>
+      validate: value =>
         isValidEverAddress(value) ? true : "Invalid TON address",
     });
   }
@@ -58,7 +59,7 @@ async function main() {
       type: "text",
       name: "name",
       message: "Name",
-      validate: (value) => !!value,
+      validate: value => !!value,
     });
   }
 
@@ -67,7 +68,7 @@ async function main() {
       type: "text",
       name: "symbol",
       message: "Symbol",
-      validate: (value) => !!value,
+      validate: value => !!value,
     });
   }
 
@@ -76,7 +77,7 @@ async function main() {
       type: "text",
       name: "decimals",
       message: "Decimals",
-      validate: (value) =>
+      validate: value =>
         isNumeric(value) && +value <= 18 ? true : "Invalid number",
     });
   }
@@ -129,27 +130,10 @@ async function main() {
     pauseBurn = options.pause_burn === "true";
   }
 
-  // if (
-  //   options.initial_supply_to !== "" &&
-  //   !isValidEverAddress(options.initial_supply_to)
-  // ) {
-  //   promptsData.push({
-  //     type: "text",
-  //     name: "initialSupplyTo",
-  //     message: "Initial supply to address (default: NO INITIAL SUPPLY)",
-  //     validate: (value) =>
-  //       value === "" || isValidEverAddress(value)
-  //         ? true
-  //         : "Invalid TON address",
-  //   });
-  // }
-
   const response = await prompts(promptsData);
 
   let initialSupplyTo =
-    options.initial_supply_to ||
-    response.initialSupplyTo ||
-    zeroAddress;
+    options.initial_supply_to || response.initialSupplyTo || zeroAddress;
   const rootOwner = options.root_owner || response.rootOwner;
   const name = options.name || response.name;
   const symbol = options.symbol || response.symbol;
@@ -166,17 +150,14 @@ async function main() {
     typeof pauseBurn === "boolean" ? pauseBurn : response.pauseBurn === "true";
 
   let initialSupply;
-  if (
-    !options.initial_supply &&
-    initialSupplyTo !== zeroAddress
-  ) {
+  if (!options.initial_supply && initialSupplyTo !== zeroAddress) {
     initialSupply =
       (
         await prompts({
           type: "text",
           name: "initialSupply",
           message: "Initial supply (amount)",
-          validate: (value) => (isNumeric(value) ? true : "Invalid number"),
+          validate: value => (isNumeric(value) ? true : "Invalid number"),
         })
       ).initialSupply || "0";
   } else {
@@ -187,12 +168,12 @@ async function main() {
 
   // const TokenRoot = await locklift.factory.getContractArtifacts("TokenRoot");
   const TokenWallet = await locklift.factory.getContractArtifacts(
-    "TokenWallet"
+    "TokenWallet",
   );
-  const signer = await locklift.keystore.getSigner("0");
-  const {contract: tokenRoot} = await locklift.factory.deployContract({
+
+  const { contract: tokenRoot } = await locklift.factory.deployContract({
     contract: "TokenRoot",
-    publicKey: signer.publicKey,
+    publicKey: keyPairs!.publicKey,
     initParams: {
       deployer_: new Address(zeroAddress),
       randomNonce_: (Math.random() * 6400) | 0,
@@ -220,7 +201,7 @@ async function main() {
 
 main()
   .then(() => process.exit(0))
-  .catch((e) => {
+  .catch(e => {
     console.log(e);
     process.exit(1);
   });

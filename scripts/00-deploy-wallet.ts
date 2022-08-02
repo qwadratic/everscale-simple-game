@@ -1,17 +1,10 @@
 import { Contract, Address } from "locklift/.";
 
 const { Command } = require("commander");
-const {
-  logContract,
-  isValidEverAddress,
-  isNumeric,
-  Migration,
-} = require("./../scripts/utils");
+const { isNumeric, Migration } = require("./../scripts/utils");
 
-const logger = require("mocha-logger");
 const program = new Command();
 const prompts = require("prompts");
-const fs = require("fs");
 const migration = new Migration();
 
 async function main() {
@@ -21,7 +14,7 @@ async function main() {
     .option("-kn, --key_number <key_number>", "Public key number")
     .option(
       "-b, --balance <balance>",
-      "Initial balance in EVERs (will send from Giver)"
+      "Initial balance in EVERs (will send from Giver)",
     );
 
   program.parse(process.argv);
@@ -33,7 +26,7 @@ async function main() {
       type: "text",
       name: "keyNumber",
       message: "Public key number",
-      validate: (value) => (isNumeric(value) ? true : "Invalid number"),
+      validate: value => (isNumeric(value) ? true : "Invalid number"),
     });
   }
 
@@ -42,7 +35,7 @@ async function main() {
       type: "text",
       name: "balance",
       message: "Initial balance (will send from Giver)",
-      validate: (value) => (isNumeric(value) ? true : "Invalid number"),
+      validate: value => (isNumeric(value) ? true : "Invalid number"),
     });
   }
 
@@ -54,7 +47,7 @@ async function main() {
   const signer = (await locklift.keystore.getSigner(keyNumber.toString()))!;
   let accountsFactory = locklift.factory.getAccountsFactory("Account");
 
-  const { account: MyAccount, tx } = await accountsFactory.deployNewAccount({
+  const { account: Account, tx } = await accountsFactory.deployNewAccount({
     publicKey: signer.publicKey,
     initParams: {
       _randomNonce: locklift.utils.getRandomNonce(),
@@ -62,13 +55,13 @@ async function main() {
     constructorParams: {},
     value: locklift.utils.toNano(balance),
   });
-  console.log(`Wallet deployed at: ${account.address}`);
-  migration.store(account, "wallet");
+  console.log(`Wallet deployed at: ${Account.address}`);
+  migration.store(Account, "wallet");
 }
 
 main()
   .then(() => process.exit(0))
-  .catch((e) => {
+  .catch(e => {
     console.log(e);
     process.exit(1);
   });
