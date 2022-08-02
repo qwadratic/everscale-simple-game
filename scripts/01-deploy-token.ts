@@ -1,12 +1,14 @@
+import { Address } from "locklift/.";
+
 const { Command } = require("commander");
 const {
   logContract,
   isValidEverAddress,
   isNumeric,
   Migration,
-  zeroAddress,
 } = require("./utils");
-
+const zeroAddress =
+  "0:0000000000000000000000000000000000000000000000000000000000000000";
 const BigNumber = require("bignumber.js");
 BigNumber.config({ EXPONENTIAL_AT: 257 });
 const logger = require("mocha-logger");
@@ -18,8 +20,7 @@ const migration = new Migration();
 
 async function main() {
   const keyPairs = await locklift.keystore.getSigner("0");
-  console.log(keyPairs);
-  const promptsData = [];
+  const promptsData: Object[] = [];
 
   program
     .allowUnknownOption()
@@ -129,27 +130,10 @@ async function main() {
     pauseBurn = options.pause_burn === "true";
   }
 
-  if (
-    options.initial_supply_to !== "" &&
-    !isValidEverAddress(options.initial_supply_to)
-  ) {
-    promptsData.push({
-      type: "text",
-      name: "initialSupplyTo",
-      message: "Initial supply to address (default: NO INITIAL SUPPLY)",
-      validate: value =>
-        value === "" || isValidEverAddress(value)
-          ? true
-          : "Invalid TON address",
-    });
-  }
-
   const response = await prompts(promptsData);
 
-  const initialSupplyTo =
-    options.initial_supply_to ||
-    response.initialSupplyTo ||
-    locklift.utils.zeroAddress;
+  let initialSupplyTo =
+    options.initial_supply_to || response.initialSupplyTo || zeroAddress;
   const rootOwner = options.root_owner || response.rootOwner;
   const name = options.name || response.name;
   const symbol = options.symbol || response.symbol;
@@ -166,10 +150,7 @@ async function main() {
     typeof pauseBurn === "boolean" ? pauseBurn : response.pauseBurn === "true";
 
   let initialSupply;
-  if (
-    !options.initial_supply &&
-    initialSupplyTo !== locklift.utils.zeroAddress
-  ) {
+  if (!options.initial_supply && initialSupplyTo !== zeroAddress) {
     initialSupply =
       (
         await prompts({
@@ -183,15 +164,18 @@ async function main() {
     initialSupply = options.initial_supply || "0";
   }
 
+  initialSupplyTo = migration.load("Account", "wallet").address;
+
+  // const TokenRoot = await locklift.factory.getContractArtifacts("TokenRoot");
   const TokenWallet = await locklift.factory.getContractArtifacts(
     "TokenWallet",
   );
-  const { contract: tokenRoot, tx } = await locklift.factory.deployContract({
-    workchain: 0,
+
+  const { contract: tokenRoot } = await locklift.factory.deployContract({
     contract: "TokenRoot",
-    publicKey: keyPairs.publicKey,
+    publicKey: keyPairs!.publicKey,
     initParams: {
-      deployer_: zeroAddress,
+      deployer_: new Address(zeroAddress),
       randomNonce_: (Math.random() * 6400) | 0,
       rootOwner_: rootOwner,
       name_: name,
@@ -202,16 +186,17 @@ async function main() {
     constructorParams: {
       initialSupplyTo: initialSupplyTo,
       initialSupply: new BigNumber(initialSupply).shiftedBy(decimals).toFixed(),
-      deployWalletValue: locklift.utils.toNano("0.1"),
+      deployWalletValue: locklift.utils.toNano(1),
       mintDisabled: disableMint,
       burnByRootDisabled: disableBurnByRoot,
       burnPaused: pauseBurn,
-      remainingGasTo: zeroAddress,
+      remainingGasTo: new Address(zeroAddress),
     },
     value: locklift.utils.toNano(5),
   });
 
   console.log(`${name}: ${tokenRoot.address}`);
+  migration.store(tokenRoot, "token");
 }
 
 main()

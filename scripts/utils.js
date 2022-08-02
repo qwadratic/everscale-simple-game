@@ -1,8 +1,10 @@
+
 const fs = require("fs");
 const BigNumber = require("bignumber.js");
 BigNumber.config({ EXPONENTIAL_AT: 257 });
 const logger = require("mocha-logger");
 const chai = require("chai");
+const { Address } = require("locklift");
 chai.use(require("chai-bignumber")());
 
 const EMPTY_TVM_CELL = "te6ccgEBAQEAAgAAAA==";
@@ -86,20 +88,20 @@ class Migration {
     return this.migration_log[alias] !== undefined;
   }
 
-  load(contract, alias) {
+  load(name, alias) {
     if (this.migration_log[alias] !== undefined) {
-      contract.setAddress(this.migration_log[alias].address);
+      
+      return locklift.factory.getDeployedContract(name, this.migration_log[alias].address);
     } else {
       throw new Error(`Contract ${alias} not found in the migration`);
     }
-    return contract;
   }
 
   store(contract, alias) {
     this.migration_log = {
       ...this.migration_log,
       [alias]: {
-        address: contract.address,
+        address: contract.address.toString(),
         name: contract.name,
       },
     };

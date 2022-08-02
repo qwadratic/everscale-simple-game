@@ -1,17 +1,12 @@
-import { Contract } from "locklift/.";
+import { Contract, Address } from "locklift/.";
 
 const { Command } = require("commander");
-const {
-  logContract,
-  isValidEverAddress,
-  isNumeric,
-  Migration,
-} = require("./../scripts/utils");
+const { isNumeric, Migration } = require("./../scripts/utils");
 
-const logger = require("mocha-logger");
 const program = new Command();
 const prompts = require("prompts");
-const fs = require("fs");
+const migration = new Migration();
+
 async function main() {
   const promptsData: object[] = [];
   program
@@ -52,7 +47,7 @@ async function main() {
   const signer = (await locklift.keystore.getSigner(keyNumber.toString()))!;
   let accountsFactory = locklift.factory.getAccountsFactory("Account");
 
-  const { account: MyAccount, tx } = await accountsFactory.deployNewAccount({
+  const { account: Account, tx } = await accountsFactory.deployNewAccount({
     publicKey: signer.publicKey,
     initParams: {
       _randomNonce: locklift.utils.getRandomNonce(),
@@ -60,7 +55,8 @@ async function main() {
     constructorParams: {},
     value: locklift.utils.toNano(balance),
   });
-  console.log(`Wallet deployed at: ${MyAccount.address}`);
+  console.log(`Wallet deployed at: ${Account.address}`);
+  migration.store(Account, "wallet");
 }
 
 main()
