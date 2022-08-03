@@ -5,10 +5,10 @@ pragma AbiHeader pubkey;
 import '@broxus/contracts/contracts/utils/CheckPubKey.sol';
 import '@broxus/contracts/contracts/utils/RandomNonce.sol';
 
-import "./tip3/interfaces/ITokenRoot.sol";
-import "./tip3/interfaces/ITokenWallet.sol";
-import "./tip3/interfaces/IAcceptTokensTransferCallback.sol";
-import "./tip3/interfaces/IAcceptTokensMintCallback.sol";
+import "@broxus/tip3/contracts/interfaces/ITokenRoot.sol";
+import "@broxus/tip3/contracts/interfaces/ITokenWallet.sol";
+import "@broxus/tip3/contracts/interfaces/IAcceptTokensTransferCallback.sol";
+import "@broxus/tip3/contracts/interfaces/IAcceptTokensMintCallback.sol";
 
 contract GitcoinWarmup is RandomNonce, CheckPubKey, IAcceptTokensTransferCallback, IAcceptTokensMintCallback {
     uint128 constant msgFee = 0.5 ever;

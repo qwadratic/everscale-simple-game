@@ -2,9 +2,11 @@ pragma ton-solidity >= 0.39.0;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
+
 import '@broxus/contracts/contracts/access/ExternalOwner.sol';
 import '@broxus/contracts/contracts/utils/CheckPubKey.sol';
 import '@broxus/contracts/contracts/utils/RandomNonce.sol';
+
 
 /*
     @title Simple externally owned contract
