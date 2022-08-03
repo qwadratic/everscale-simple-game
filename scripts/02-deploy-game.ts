@@ -19,7 +19,6 @@ async function main() {
     )
     .option("-r, --reward <reward>", "Amount of reward for 1 game")
     .option("-mp, --max_players <max_players>", "Number of players for 1 game");
-  //.option("-cn, --contract_name <contract_name>", "Wallet contract name");
 
   program.parse(process.argv);
 
@@ -53,28 +52,6 @@ async function main() {
   const balance = +(options.balance || response.balance);
   const reward = +(options.reward || response.reward);
   const maxPlayers = +(options.max_players || response.maxPlayers);
-  // const contractPath =
-  //   options.contract_path || response.contractPath || "build";
-  // let contractName1;
-  // if (!options.contract_name) {
-  //   const contracts = locklift.factory.getAllArtifacts();
-  //   console.log(11);
-  //   const contractName = (
-  //     await prompts({
-  //       type: "select",
-  //       name: "contractName",
-  //       message: "Select Gitcoin Warmup contract name",
-  //       choices: [
-  //         ...new Set(fs.readdirSync(contractPath).map(o => o.split(".")[0])),
-  //       ]
-  //         .filter((value, index, self) => self.indexOf(value) === index)
-  //         .map(e => new Object({ title: e, value: e })),
-  //     })
-  //   ).contractName;
-  //   console.log;
-  // } else {
-  //   contractName = options.contract_name;
-  // }
 
   const tokenRootCtr = migration.load("TokenRoot", "token");
 

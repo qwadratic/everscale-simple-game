@@ -1,21 +1,14 @@
 import { Address } from "locklift/.";
+import { Command } from "commander";
+import prompts from "prompts";
 
-const { Command } = require("commander");
-const {
-  logContract,
-  isValidEverAddress,
-  isNumeric,
-  Migration,
-} = require("./utils");
-const zeroAddress =
-  "0:0000000000000000000000000000000000000000000000000000000000000000";
-const BigNumber = require("bignumber.js");
+import { isValidEverAddress, isNumeric, Migration, zeroAddress } from "./utils";
+import BigNumber from "bignumber.js";
+
 BigNumber.config({ EXPONENTIAL_AT: 257 });
-const logger = require("mocha-logger");
-const program = new Command();
-const prompts = require("prompts");
 
-const fs = require("fs");
+const program = new Command();
+
 const migration = new Migration();
 
 async function main() {
@@ -166,10 +159,7 @@ async function main() {
 
   initialSupplyTo = migration.load("Account", "wallet").address;
 
-  // const TokenRoot = await locklift.factory.getContractArtifacts("TokenRoot");
-  const TokenWallet = await locklift.factory.getContractArtifacts(
-    "TokenWallet",
-  );
+  const TokenWallet = locklift.factory.getContractArtifacts("TokenWallet");
 
   const { contract: tokenRoot } = await locklift.factory.deployContract({
     contract: "TokenRoot",

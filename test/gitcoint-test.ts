@@ -1,39 +1,13 @@
-import { Command } from "commander";
-import prompts from "prompts";
 import { expect } from "chai";
-import {
-  Contract,
-  Signer,
-  Address,
-  ContractMethod,
-  AbiFunctionInputs,
-  AbiFunctionName,
-  DecodedAbiFunctionOutputs,
-} from "locklift";
+import { Contract, Signer, Address } from "locklift";
 import { FactorySource } from "../build/factorySource";
-import {
-  logContract,
-  isValidEverAddress,
-  isNumeric,
-  Migration,
-  zeroAddress,
-  EMPTY_TVM_CELL,
-} from "./../scripts/utils";
-import { Account } from "locklift/factory";
-import { TransactionWithOutput } from "locklift/build/types";
-import { copyFileSync } from "fs";
+import { zeroAddress, EMPTY_TVM_CELL } from "./../scripts/utils";
 
 let gitcoinContract: Contract<FactorySource["GitcoinWarmup"]>;
 let signer: Signer;
 let tokenRoot: Contract<FactorySource["TokenRoot"]>;
-const program = new Command();
-const migration = new Migration();
 
 let wallets: any[];
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 const keyNumber = "0";
 
@@ -69,20 +43,6 @@ describe("Test GitcoinWarmup contract", async function () {
       const INIT_STATE = 0;
       let accountsFactory = locklift.factory.getAccountsFactory("Account");
 
-      // for (let i = 0; i < MAX_PLAYERS; i++) {
-      //   const keyPair = (await locklift.keystore.getSigner(i.toString()))!;
-      //   try {
-      //     const { account: wallet } = await accountsFactory.deployNewAccount({
-      //       publicKey: keyPair.publicKey,
-      //       initParams: {
-      //         _randomNonce: locklift.utils.getRandomNonce(),
-      //       },
-      //       constructorParams: {},
-      //       value: locklift.utils.toNano(200),
-      //     });
-      //     wallets[i] = wallet;
-      //   } catch (err) {}
-      // }
       const deploys: Promise<{ account: Object; tx: Object }>[] = [];
 
       for (let i = 0; i < 5; i++) {
