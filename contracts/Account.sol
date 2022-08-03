@@ -28,7 +28,7 @@ contract Account is ExternalOwner, RandomNonce, CheckPubKey {
         @param flags Message flags
         @param payload Tvm cell encoded payload, such as method call
     */
-    function sendTransaction(
+    function sendTransaction (
         address dest,
         uint128 value,
         bool bounce,
@@ -36,8 +36,9 @@ contract Account is ExternalOwner, RandomNonce, CheckPubKey {
         TvmCell payload
     )
         public
-        view
+        pure
         onlyOwner
+
     {
         tvm.accept();
 

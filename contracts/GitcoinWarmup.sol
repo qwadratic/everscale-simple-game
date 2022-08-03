@@ -3,30 +3,18 @@ pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
 import '@broxus/contracts/contracts/utils/CheckPubKey.sol';
-import '@broxus/contracts/contracts/utils/RandomNonce.sol';
 
 import "@broxus/tip3/contracts/interfaces/ITokenRoot.sol";
 import "@broxus/tip3/contracts/interfaces/ITokenWallet.sol";
-import "@broxus/tip3/contracts/interfaces/IAcceptTokensTransferCallback.sol";
-import "@broxus/tip3/contracts/interfaces/IAcceptTokensMintCallback.sol";
 
-contract GitcoinWarmup is RandomNonce, CheckPubKey, IAcceptTokensTransferCallback, IAcceptTokensMintCallback {
+import "@broxus/tip3/contracts/libraries/TokenMsgFlag.sol";
+
+import "./abstract/GitcoinWarmupBase.sol";
+
+contract GitcoinWarmup is GitcoinWarmupBase, CheckPubKey {
     uint128 constant msgFee = 0.5 ever;
     uint128 constant computeFee = 0.1 ever;
     uint128 deployWalletBalance;
-    uint128 public reward;
-    uint8 public maxPlayers;
-    uint8 public maxBid;
-
-    address public tokenRoot;
-
-    address public tokenWallet;
-    uint128 public balance;
-
-    uint8 public nowPlayers;
-    mapping (address => uint8) public bids;
-
-    event gameResult (address[] _winners, int16 _winningDelta, uint8 _winningNumber);
 
     constructor(
         uint128 _deployWalletBalance,
@@ -38,54 +26,17 @@ contract GitcoinWarmup is RandomNonce, CheckPubKey, IAcceptTokensTransferCallbac
         tvm.accept();
         reward = _reward;
         maxPlayers = _maxPlayers;
-        tokenRoot = _tokenRoot;
+        tokenRoot_ = _tokenRoot;
         maxBid = _maxBid;
         deployWalletBalance = _deployWalletBalance;
-        ITokenRoot(tokenRoot).deployWallet{
+        ITokenRoot(tokenRoot_).deployWallet{
             value: deployWalletBalance + msgFee,
             flag: 2,
-            callback: GitcoinWarmup.receiveTokenWalletAddress
+            callback: GitcoinWarmupBase.receiveTokenWalletAddress
         }(
             address(this),
             deployWalletBalance
         );
-    }
-
-    function receiveTokenWalletAddress(address wallet) external {
-        require(msg.sender == tokenRoot, 100, "Sender is not TokenRoot");
-        tokenWallet = wallet;
-    }
-
-    function onAcceptTokensTransfer(
-        address _tokenRoot,
-        uint128 amount,
-        address sender,
-        address senderWallet,
-        address remainingGasTo,
-        TvmCell payload
-    ) external override {
-        require(msg.sender == tokenWallet, 101, "Sender is not TokenWallet");
-        balance += amount;
-
-        _tokenRoot;
-        sender;
-        senderWallet;
-        remainingGasTo;
-        payload;
-    }
-
-    function onAcceptTokensMint(
-        address _tokenRoot,
-        uint128 amount,
-        address remainingGasTo,
-        TvmCell payload
-    ) external override {
-        require(msg.sender == tokenWallet, 101, "Sender is not token wallet");
-        balance += amount;
-
-        _tokenRoot;
-        remainingGasTo;
-        payload;
     }
 
     function placeBid(uint8 _number) external {
@@ -148,4 +99,5 @@ contract GitcoinWarmup is RandomNonce, CheckPubKey, IAcceptTokensTransferCallbac
             payload: _empty
         });
     }
+
 }
