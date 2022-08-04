@@ -10,7 +10,7 @@ import "@broxus/tip3/contracts/interfaces/IAcceptTokensMintCallback.sol";
 import "@broxus/tip3/contracts/interfaces/IBounceTokensTransferCallback.sol";
 
 import "../libraries/GitcoinErrors.sol";
-
+import "locklift/src/console.sol";
 
 contract GitcoinWarmupBase is RandomNonce, IAcceptTokensTransferCallback, IAcceptTokensMintCallback, IBounceTokensTransferCallback {
     uint128 constant msgFee = 0.5 ever;
@@ -20,7 +20,8 @@ contract GitcoinWarmupBase is RandomNonce, IAcceptTokensTransferCallback, IAccep
     uint8 public maxBid;
 
     address public tokenRoot_;
-
+    address public hiy;
+    address public ki;
     address public tokenWallet;
     uint128 public balance;
     uint8 public nowPlayers;
@@ -81,8 +82,10 @@ contract GitcoinWarmupBase is RandomNonce, IAcceptTokensTransferCallback, IAccep
         uint128 amount,
         address revertedFrom
     ) public override {
-        tvm.rawReserve(_reserve(), 0);
-        balance -= amount;
+        require(msg.sender == tokenWallet, GitcoinErrors.NOT_TOKEN_WALLET);
+        tvm.accept();
+        balance += amount;
+        revertedFrom;
         tokenRoot;
         revertedFrom;
     }

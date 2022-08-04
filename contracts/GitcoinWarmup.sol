@@ -91,7 +91,8 @@ contract GitcoinWarmup is GitcoinWarmupBase, CheckPubKey {
         TvmCell _empty;
         ITokenWallet(tokenWallet).transfer{
             value: deployWalletBalance + msgFee,
-            flag: TokenMsgFlag.IGNORE_ERRORS
+            flag: TokenMsgFlag.IGNORE_ERRORS,
+            bounce: true
             } ({
                 amount: amount,
                 recipient: to,
@@ -101,5 +102,4 @@ contract GitcoinWarmup is GitcoinWarmupBase, CheckPubKey {
                 payload: _empty
         });
     }
-
 }
