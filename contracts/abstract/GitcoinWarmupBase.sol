@@ -2,20 +2,19 @@ pragma ton-solidity >= 0.57.3;
 pragma AbiHeader expire;
 pragma AbiHeader pubkey;
 
-import '@broxus/contracts/contracts/utils/CheckPubKey.sol';
 import '@broxus/contracts/contracts/utils/RandomNonce.sol';
 
-import "@broxus/tip3/contracts/interfaces/ITokenRoot.sol";
 import "@broxus/tip3/contracts/interfaces/ITokenWallet.sol";
 import "@broxus/tip3/contracts/interfaces/IAcceptTokensTransferCallback.sol";
 import "@broxus/tip3/contracts/interfaces/IAcceptTokensMintCallback.sol";
 import "@broxus/tip3/contracts/interfaces/IBounceTokensTransferCallback.sol";
-//import "@broxus/tip3/contracts/interfaces/IBounceTokensBurnCallback.sol";
 
-import "@broxus/tip3/contracts/libraries/TokenMsgFlag.sol";
+import "../libraries/GitcoinErrors.sol";
 
 
 contract GitcoinWarmupBase is RandomNonce, IAcceptTokensTransferCallback, IAcceptTokensMintCallback, IBounceTokensTransferCallback {
+    uint128 constant msgFee = 0.5 ever;
+    uint128 constant computeFee = 0.1 ever;
     uint128 public reward;
     uint8 public maxPlayers;
     uint8 public maxBid;
@@ -30,13 +29,17 @@ contract GitcoinWarmupBase is RandomNonce, IAcceptTokensTransferCallback, IAccep
     event gameResult (address[] _winners, int16 _winningDelta, uint8 _winningNumber);
 
     modifier onlyTokenRoot() {
-      require(msg.sender == tokenRoot_, 100, "Sender is not TokenRoot");
+      require(msg.sender == tokenRoot_, GitcoinErrors.NOT_TOKEN_ROOT);
       _;
     }
 
     modifier onlyTokenWallet() {
-      require(msg.sender == tokenWallet, 101, "Sender is not TokenWallet");
+      require(msg.sender == tokenWallet, GitcoinErrors.NOT_TOKEN_WALLET);
       _;
+    }
+
+    function _reserve() public view returns(uint128 reserve){
+        return msgFee + computeFee * maxPlayers;
     }
 
     function receiveTokenWalletAddress(address wallet) external onlyTokenRoot {
@@ -78,14 +81,14 @@ contract GitcoinWarmupBase is RandomNonce, IAcceptTokensTransferCallback, IAccep
         uint128 amount,
         address revertedFrom
     ) public override {
-        tvm.rawReserve(20 ever, 0);
+        tvm.rawReserve(_reserve(), 0);
         balance -= amount;
         tokenRoot;
         revertedFrom;
     }
 
     onBounce(TvmSlice body) external {
-        tvm.rawReserve(20 ever, 2);
+        tvm.rawReserve(_reserve(), 2);
 
         uint32 functionId = body.decode(uint32);
 

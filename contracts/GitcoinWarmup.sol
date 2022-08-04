@@ -10,10 +10,9 @@ import "@broxus/tip3/contracts/interfaces/ITokenWallet.sol";
 import "@broxus/tip3/contracts/libraries/TokenMsgFlag.sol";
 
 import "./abstract/GitcoinWarmupBase.sol";
+import "./libraries/GitcoinErrors.sol";
 
 contract GitcoinWarmup is GitcoinWarmupBase, CheckPubKey {
-    uint128 constant msgFee = 0.5 ever;
-    uint128 constant computeFee = 0.1 ever;
     uint128 deployWalletBalance;
 
     constructor(
@@ -31,7 +30,7 @@ contract GitcoinWarmup is GitcoinWarmupBase, CheckPubKey {
         deployWalletBalance = _deployWalletBalance;
         ITokenRoot(tokenRoot_).deployWallet{
             value: deployWalletBalance + msgFee,
-            flag: 2,
+            flag: TokenMsgFlag.IGNORE_ERRORS,
             callback: GitcoinWarmupBase.receiveTokenWalletAddress
         }(
             address(this),
@@ -40,23 +39,23 @@ contract GitcoinWarmup is GitcoinWarmupBase, CheckPubKey {
     }
 
     function placeBid(uint8 _number) external {
-        require(_number <= maxBid, 200, "Bid more than the maximum");
-        require(balance >= reward * maxPlayers, 201, "Insufficient funds to reward on the gaming contract");
-        require(!bids.exists(msg.sender), 202, "You are already in the game!");
-        tvm.rawReserve(20 ever, 2);
+        require(_number <= maxBid, GitcoinErrors.BID_TOO_HIGH);
+        require(balance >= reward * maxPlayers, GitcoinErrors.NOT_ENOUGH_GAME_BALANCE);
+        require(!bids.exists(msg.sender), GitcoinErrors.ALREADY_IN_GAME);
+        tvm.rawReserve(_reserve(), 2);
 
         bids[msg.sender] = _number;
         nowPlayers += 1;
 
         if (nowPlayers == maxPlayers)
-            this.finishGame{value: 0, flag: 128}(msg.sender);
+            this.finishGame{value: 0, flag: TokenMsgFlag.ALL_NOT_RESERVED}(msg.sender);
         else
-            msg.sender.transfer({value: 0, flag: 128});
+            msg.sender.transfer({value: 0, flag: TokenMsgFlag.ALL_NOT_RESERVED});
     }
 
     function finishGame(address gasTo) external {
-        require(msg.sender == address(this), 203, "I can only be finished by message from me");
-        tvm.rawReserve(20 ever, 2);
+        require(msg.sender == address(this), GitcoinErrors.NOT_SELF_CONTRACT);
+        tvm.rawReserve(_reserve(), 2);
 
         (uint8 r, int16 winDelta, address[] winners) = _getWinners();
         balance -= reward * uint128(winners.length);
@@ -66,7 +65,7 @@ contract GitcoinWarmup is GitcoinWarmupBase, CheckPubKey {
         delete nowPlayers;
         delete bids;
         emit gameResult(winners, winDelta, r);
-        gasTo.transfer({value: 0, flag: 128});
+        gasTo.transfer({value: 0, flag: TokenMsgFlag.ALL_NOT_RESERVED});
     }
 
     function _getWinners() private view returns (uint8 r, int16 winDelta, address[] winners) {
@@ -90,13 +89,16 @@ contract GitcoinWarmup is GitcoinWarmupBase, CheckPubKey {
 
     function _payReward(uint128 amount, address to) private inline view {
         TvmCell _empty;
-        ITokenWallet(tokenWallet).transfer{value: deployWalletBalance + msgFee, flag: 2}({
-            amount: amount,
-            recipient: to,
-            deployWalletValue: deployWalletBalance,
-            remainingGasTo: address(this),
-            notify: true,
-            payload: _empty
+        ITokenWallet(tokenWallet).transfer{
+            value: deployWalletBalance + msgFee,
+            flag: TokenMsgFlag.IGNORE_ERRORS
+            } ({
+                amount: amount,
+                recipient: to,
+                deployWalletValue: deployWalletBalance,
+                remainingGasTo: address(this),
+                notify: true,
+                payload: _empty
         });
     }
 
