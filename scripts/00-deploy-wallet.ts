@@ -1,10 +1,10 @@
-import { Contract, Address } from "locklift/.";
+import { Command } from "commander";
+import prompts from "prompts";
 
-const { Command } = require("commander");
-const { isNumeric, Migration } = require("./../scripts/utils");
+import { isNumeric, Migration } from "./../scripts/utils";
 
 const program = new Command();
-const prompts = require("prompts");
+
 const migration = new Migration();
 
 async function main() {
@@ -47,7 +47,7 @@ async function main() {
   const signer = (await locklift.keystore.getSigner(keyNumber.toString()))!;
   let accountsFactory = locklift.factory.getAccountsFactory("Account");
 
-  const { account: Account, tx } = await accountsFactory.deployNewAccount({
+  const { account: Account } = await accountsFactory.deployNewAccount({
     publicKey: signer.publicKey,
     initParams: {
       _randomNonce: locklift.utils.getRandomNonce(),

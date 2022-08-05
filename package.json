@@ -1,5 +1,5 @@
 {
-  "name": "locklift-project",
+  "name": "everscale-sscalator",
   "version": "1.0.0",
   "description": "",
   "scripts": {
@@ -8,6 +8,7 @@
     "new-token": "yarn locklift run -n local -s scripts/01-deploy-token.ts -ro 0:0000000000000000000000000000000000000000000000000000000000000000 --name escalator --symbol ESC --decimals 0 --initial_supply 10000 --disable_mint false --disable_burn_by_root true --pause_burn false",
     "new-game": "yarn locklift run -n local -s scripts/02-deploy-game.ts --balance 50",
     "topup-game": "yarn locklift run -n local -s scripts/03-topup-game.ts",
+    "full-deploy": "yarn new-wallet && yarn new-token && yarn new-game",
     "start-sandbox": "docker run -d -e USER_AGREEMENT=yes --rm --name local-node -p80:80 tonlabs/local-node:0.29.1",
     "stop-sandbox": "docker kill local-node",
     "reload-sandbox": "yarn stop-sandbox && yarn start-sandbox"
@@ -16,6 +17,7 @@
   "license": "ISC",
   "devDependencies": {
     "@broxus/contracts": "^1.1.0",
+    "@broxus/tip3": "git+https://github.com/broxus/tip3.git#5.0",
     "@types/chai": "^4.3.1",
     "@types/fs-extra": "^9.0.13",
     "@types/mocha": "^9.1.1",

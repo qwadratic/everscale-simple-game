@@ -1,5 +1,7 @@
-const { Command } = require("commander");
-const { Migration } = require("./utils");
+import { GitcoinWarmupAbi, TokenRootAbi } from "build/factorySource";
+import { Command } from "commander";
+import { Migration, EMPTY_TVM_CELL } from "./utils";
+import { Contract } from "locklift";
 
 const BigNumber = require("bignumber.js");
 BigNumber.config({ EXPONENTIAL_AT: 257 });
@@ -16,8 +18,11 @@ async function main() {
   const f = locklift.factory.getAccountsFactory("Account");
 
   const wallet = migration.load("Account", "wallet");
-  const gtc = migration.load("GitcoinWarmup", "gitcoin");
-  const tr = migration.load("TokenRoot", "token");
+  const gtc: Contract<GitcoinWarmupAbi> = migration.load(
+    "GitcoinWarmup",
+    "gitcoin",
+  );
+  const tr: Contract<TokenRootAbi> = migration.load("TokenRoot", "token");
   const twaddr = (
     await tr.methods
       .walletOf({ answerId: 0, walletOwner: wallet.address })
@@ -43,7 +48,7 @@ async function main() {
         deployWalletValue: 0,
         remainingGasTo: wallet.address,
         notify: true,
-        payload: "te6ccgEBAQEAAgAAAA==",
+        payload: EMPTY_TVM_CELL,
       }),
   );
   console.log(await gtc.methods.balance({}).call());
