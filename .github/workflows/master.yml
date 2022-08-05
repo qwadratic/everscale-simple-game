@@ -4,11 +4,8 @@ on:
   push:
     branches:
       - master
-      - dev
 
   pull_request:
-    branches:
-      - master
 
 jobs:
   compile-and-test:
@@ -23,7 +20,7 @@ jobs:
       - name: Install node modules
         run: yarn
       - name: Install compiler and linker
-      - run: yarn everdev sol set --compiler 0.57.3 --linker 0.14.38
+        run: yarn everdev sol set --compiler 0.57.3 --linker 0.14.38
       - name: Give the right to launch the sandbox
         run: chmod 777 ./ci/sandbox.sh
       - name: Run sandbox in background
